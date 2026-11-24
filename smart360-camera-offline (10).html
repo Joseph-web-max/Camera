@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart 360 Camera</title>
+<meta name="theme-color" content="#0a6cff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Smart 360">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#eef1f4;--card:#fff;--ink:#14202b;--mute:#5b6b7a;--line:#d5dce3;--acc:#0a6cff;--acc-ink:#fff;--rec:#d6341f;--ok:#17894a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e141a;--card:#17202a;--ink:#e8eef3;--mute:#93a3b3;--line:#2a3745;--acc:#5aa2ff;--acc-ink:#07121f;--rec:#ff6a55;--ok:#4cc884}}
+:root[data-theme="dark"]{--bg:#0e141a;--card:#17202a;--ink:#e8eef3;--mute:#93a3b3;--line:#2a3745;--acc:#5aa2ff;--acc-ink:#07121f;--rec:#ff6a55;--ok:#4cc884}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:4px 0 2px;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:0 0 14px}
+.stage{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:4/3}
+video#live{width:100%;height:100%;object-fit:cover;display:block}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(0,0,0,.55);color:#fff;text-align:center;padding:20px}
+.badge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.6);color:#fff;border-radius:99px;padding:3px 10px;font-size:.8rem;display:none}
+.badge.on{display:block}.badge i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rec);margin-right:6px}
+.row{display:grid;grid-template-columns:150px 1fr;gap:14px;margin-top:14px;align-items:center}
+.dial{width:150px;height:150px}
+.dial .seg{fill:none;stroke:var(--line);stroke-width:7}
+.dial .seg.on{stroke:var(--acc)}
+.dial .needle{stroke:var(--rec);stroke-width:2.5;stroke-linecap:round;transform-origin:50px 50px}
+.dial .bub{fill:var(--mute)}.dial .bub.ok{fill:var(--ok)}
+.dial text{fill:var(--mute);font-size:7px;text-anchor:middle}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:12px 10px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+button.rec{background:var(--rec);color:#fff;border-color:var(--rec)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.status{margin:10px 0 0;color:var(--mute);font-size:.9rem;min-height:1.4em}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
+h2{font-size:1.05rem;margin:0 0 8px}
+.tr{white-space:pre-wrap;min-height:3em;margin:0 0 10px}
+.mute{color:var(--mute)}
+.gal{display:grid;gap:12px}
+.item{border:1px solid var(--line);border-radius:10px;padding:8px;overflow:hidden}
+.item img,.item video{max-width:100%;border-radius:6px;display:block}
+.scroll{overflow-x:auto}.scroll img{max-width:none;height:200px}
+.item a{display:inline-block;margin-top:6px;color:var(--acc);font-weight:600}
+select{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:12px 10px}
+textarea{width:100%;min-height:80px;font:12px/1.3 ui-monospace,monospace;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px;margin:8px 0}
+#remoteWrap video{width:100%;border-radius:10px;background:#000;margin:8px 0}
+input[type=range]{width:100%;margin-top:8px}
+[hidden]{display:none!important}
+.ic{width:18px;height:18px;vertical-align:-3px;margin-right:6px}
+.chip{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.6);color:#fff;border-radius:99px;padding:3px 10px 3px 8px;font-size:.8rem;display:flex;gap:6px;align-items:center}
+.chip .ic{margin:0;width:16px;height:16px}
+.link{display:flex;align-items:center;gap:10px;margin:6px 0 10px;color:var(--mute)}
+.link>div{text-align:center;font-size:.8rem}
+.link .ic{width:36px;height:36px;margin:0;display:block}
+.link i{flex:1;height:2px;background:var(--line);border-radius:2px}
+.link.on i{background:var(--acc)}.link.on .ic{color:var(--acc)}
+#mix{position:absolute;inset:0;width:100%;height:100%;background:#000;cursor:pointer}
+.off{position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none}
+#mix{object-fit:cover}
+.adj{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-top:14px}
+.adj summary{font-weight:600;cursor:pointer}
+.adj label{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:10px;margin-top:10px}
+.adj input[type=range]{margin:0}.adj select{padding:8px}.adj button{margin-top:10px}
+.count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7rem;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none}
+#bar{display:none;position:absolute;left:0;right:0;bottom:0;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));gap:10px;justify-content:center;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+#bar button{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.45)}
+#bar button.rec{background:var(--rec);border-color:var(--rec)}
+.stage.full{position:fixed;inset:0;z-index:50;border-radius:0;aspect-ratio:auto;width:100%;height:100dvh}
+.stage.full #bar{display:flex}
+.trim label{display:grid;grid-template-columns:48px 1fr 56px;gap:8px;align-items:center;margin-top:8px}
+.trim summary{cursor:pointer;font-weight:600;margin-top:8px}
+.overlay small{max-width:100%;overflow-wrap:anywhere}
+.ov{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.ring{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:2px solid #fff;border-radius:50%;pointer-events:none}
+@media (prefers-reduced-motion:no-preference){.ring{animation:rg .8s forwards}@keyframes rg{from{transform:scale(1.6);opacity:1}to{transform:scale(1);opacity:0}}}
+#specs table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.88rem}
+#specs td{padding:5px 4px;border-top:1px solid var(--line);vertical-align:top}#specs td:first-child{color:var(--mute);width:42%}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+#pwr{display:flex;align-items:center;gap:6px;white-space:nowrap;margin-top:6px}
+#pwr .ic{margin:0}.dot{width:10px;height:10px;border-radius:50%;background:var(--mute);display:inline-block}
+#pwr.on .dot{background:var(--ok)}
+#mirror{position:fixed;z-index:60;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.45);touch-action:none;cursor:grab;max-width:96vw}
+#mirror video{display:block;width:100%;height:auto;transform:scaleX(-1)}
+#mirror .mbar{position:absolute;right:6px;bottom:6px;display:flex;gap:4px}
+#mirror .mbar button{padding:2px 9px;font-size:.9rem;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;border:1px solid rgba(255,255,255,.45)}
+#mirror.full{inset:0;width:100vw;height:100dvh;border-radius:0;max-width:none;cursor:default}
+#mirror.full video{height:100%;object-fit:cover}
+.mgrip{position:absolute;left:0;right:0;top:0;height:22px;background:linear-gradient(rgba(0,0,0,.55),transparent);cursor:grab;display:flex;justify-content:center;align-items:center;z-index:1}
+.mgrip::after{content:"";width:36px;height:4px;border-radius:3px;background:rgba(255,255,255,.75)}
+#mirror:active{cursor:grabbing}
+#mirror:focus-visible{outline:3px solid var(--acc)}
+#mirror video{user-select:none;-webkit-user-drag:none;pointer-events:none}
+.mres{position:absolute;right:0;bottom:0;width:30px;height:30px;cursor:nwse-resize;z-index:1;touch-action:none;background:linear-gradient(135deg,transparent 52%,rgba(255,255,255,.9) 52%,rgba(255,255,255,.9) 60%,transparent 60%,transparent 72%,rgba(255,255,255,.9) 72%,rgba(255,255,255,.9) 80%,transparent 80%)}
+#mirror .mbar{top:28px;bottom:auto}
+#mirror.full .mgrip,#mirror.full .mres{display:none}
+button,select,summary{touch-action:manipulation}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+@media (max-width:420px){.row{grid-template-columns:1fr}.dial{margin:0 auto}}
+@media (prefers-reduced-motion:no-preference){.dial .needle{transition:transform .12s linear}}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><div><h1>Smart 360 Camera</h1>
+<p class="sub">Photo, video, guided 360° panorama, clean sound, and a tidy transcript with summary.</p></div>
+<button id="pwr" aria-pressed="false" aria-label="Camera power"></button></div>
+
+<div class="stage" id="stage">
+  <video id="live" playsinline muted></video>
+  <canvas id="ov" class="ov"></canvas><canvas id="mix" hidden></canvas><video id="live2" class="off" playsinline muted></video>
+  <span class="badge" id="badge"><i></i><span id="badgeText">REC</span></span>
+  <span class="chip" id="chip" hidden><span id="chipIcon"></span><span id="side">Camera</span></span>
+  <div class="count" id="count" hidden></div>
+  <div id="bar"><button id="bPhoto">Photo</button><button id="bVideo">Record</button><button id="bFlip">Switch camera</button><button id="bExit">Exit</button></div>
+  <div class="overlay" id="gate">
+    <strong>Allow camera and microphone to begin</strong>
+    <button class="pri" id="start">Start camera</button>
+    <small id="gateMsg"></small>
+  </div>
+</div>
+
+<div class="row">
+  <svg class="dial" viewBox="0 0 100 100" role="img" aria-label="Panorama progress and level indicator" id="dial"></svg>
+  <div class="btns">
+    <button class="pri" id="photo" disabled>Best photo</button>
+    <button id="video" disabled>Record video</button>
+    <button id="pano" disabled>360° panorama</button>
+    <button id="talk" disabled>Transcribe</button>
+    <button id="flip" disabled>Switch front / back</button>
+    <button id="shot" disabled>Add shot</button>
+    <button id="tt">Connect turntable</button>
+    <button id="rvid" disabled>Rotating video</button>
+    <select id="rvDeg" aria-label="Sweep angle"><option value="180">180°</option><option value="270">270°</option><option value="360">360°</option></select>
+    <button id="auto" disabled>Auto-adjust: on</button>
+    <button id="dual" disabled>Both sides live</button>
+    <button id="both" disabled>Both sides photo</button>
+    <button id="full" disabled>Full screen view</button>
+    <button id="mir" disabled>Mirror</button>
+  </div>
+</div>
+<p class="status" id="status" role="status">Ready.</p>
+<input type="range" id="zoom" hidden aria-label="Zoom">
+<details class="adj"><summary>Adjust photo and video</summary>
+  <label>Brightness<input type="range" id="aB" min="50" max="150" value="100"></label>
+  <label>Contrast<input type="range" id="aC" min="50" max="150" value="100"></label>
+  <label>Color<input type="range" id="aS" min="0" max="200" value="100"></label>
+  <label>Look<select id="aF"><option value="none">Natural</option><option value="vivid">Vivid</option><option value="bw">Black and white</option><option value="warm">Warm</option><option value="cool">Cool</option><option value="fade">Soft fade</option></select></label>
+  <label>Mirror<select id="aM"><option value="auto">Auto (preview only)</option><option value="on">On (saved too)</option><option value="off">Off</option></select></label>
+  <label>Timer<select id="aT"><option value="0">Off</option><option value="3">3 seconds</option><option value="5">5 seconds</option><option value="10">10 seconds</option></select></label>
+  <button id="aReset">Reset adjustments</button>
+  <p class="mute" id="adjNote"></p>
+</details>
+<details class="adj"><summary>Mirror</summary>
+  <label>Size<select id="mSize"><option value="s">Small</option><option value="m" selected>Medium</option><option value="l">Large</option><option value="f">Full screen</option></select></label>
+  <label>Fine size<input type="range" id="mW" min="100" max="720" step="10" value="260"></label>
+  <label>Position<select id="mPos"><option value="top">Under the camera hole (top centre)</option><option value="tl">Top left</option><option value="tr">Top right</option><option value="center">Centre</option><option value="bottom">Bottom centre</option><option value="custom">Where I drag it</option></select></label>
+  <p class="mute">Put the mirror at the top centre, right under your device’s camera hole (phone front camera or laptop webcam), so you look at the lens while you check yourself. Drag it anywhere by its top bar or its picture, drag the bottom-right corner to resize, use the arrow keys to nudge it, and double-click to put it back under the camera hole. It remembers where you left it.</p>
+</details>
+<details class="adj"><summary>Pro camera</summary>
+  <label>Shoot for<select id="pMode"><option value="">Custom</option><option value="wild">Wildlife</option><option value="wed">Wedding / portrait</option><option value="com">Commercial / product</option><option value="vid">Video production</option></select></label>
+  <label>Photo size<select id="pRes"><option value="3000">Standard</option><option value="4500">High</option><option value="0">Maximum (sensor)</option></select></label>
+  <label>Format<select id="pFmt"><option value="jpg">JPEG</option><option value="png">PNG (lossless)</option></select></label>
+  <label>Best of<select id="pBurst"><option value="1">Automatic</option><option value="4">4 burst frames</option><option value="8">8 burst frames</option></select></label>
+  <label>Video size<select id="pVq"><option value="720">HD 720p</option><option value="1080" selected>Full HD 1080p</option><option value="2160">4K</option></select></label>
+  <label>Frame rate<select id="pFps"><option value="24">24 fps</option><option value="30" selected>30 fps</option><option value="60">60 fps</option></select></label>
+  <label>Eye-tracking AF<select id="pEye"><option value="on">On</option><option value="off">Off</option></select></label>
+  <label>Stabilize<select id="pStab"><option value="off">Off</option><option value="on">On (video)</option></select></label>
+  <p class="mute" id="pNote">Tap the picture to focus on that spot.</p>
+  <div id="specs"></div>
+</details>
+
+<section>
+  <h2>Use another screen</h2>
+  <div class="link" id="link"><div><span id="lkCam"></span>Camera</div><i></i><div><span id="lkScr"></span>Screen</div></div>
+  <p class="mute" id="lkTxt" role="status">Not connected</p>
+  <p class="mute">Show the camera on a second phone, laptop, tablet, or TV, and press the shutter from there. Both devices open this same file and join the same Wi‑Fi or hotspot. No internet needed.</p>
+  <div class="btns"><button id="rShare">Share this camera</button><button id="rWatch">Watch on this screen</button></div>
+  <textarea id="rBox" placeholder="The pairing code appears or is pasted here" aria-label="Pairing code"></textarea>
+  <div class="btns"><button id="rCopy">Copy code</button><button id="rApply" class="pri">Connect</button></div>
+  <div id="remoteWrap" hidden><video id="remoteVid" playsinline autoplay muted></video></div>
+  <div class="btns" id="rCtl" hidden><button id="r_photo" class="pri">Photo</button><button id="r_video">Record video</button><button id="r_rvid">Rotating video</button><button id="r_pano">360° panorama</button><button id="r_flip">Switch front / back</button></div>
+  <p class="mute" id="remoteSide"></p>
+  <p class="mute">A laptop usually has one camera. To shoot the other side, use your phone as the camera and watch on the laptop, then tap “Switch front / back” on either screen.</p>
+  <p class="mute">Steps: (1) On the camera device, tap Share and copy the code. (2) On the other screen, tap Watch, paste the code, tap Connect, then copy the reply code. (3) Paste the reply on the camera device and tap Connect.</p>
+</section>
+
+<section>
+  <h2>Transcript</h2>
+  <p class="tr" id="clean"><span class="mute">Start “Transcribe” and speak. Repeated words, fillers, and repeated sentences are removed as you go.</span></p>
+  <h2>Summary</h2>
+  <p class="tr" id="sum"><span class="mute">The summary appears here.</span></p>
+  <button id="copy" disabled>Copy text</button>
+</section>
+
+<section>
+  <h2>Use on your phone</h2>
+  <p class="mute" id="instTxt"></p>
+  <button id="install" class="pri" hidden>Install app</button>
+</section>
+
+<section>
+  <h2>Captures</h2>
+  <div class="gal" id="gal"><span class="mute">Photos, videos, and panoramas you capture appear here.</span></div>
+</section>
+</main>
+<div id="mirror" hidden tabindex="0" role="group" aria-label="Mirror. Drag to move it. Arrow keys also move it."><div class="mgrip" aria-hidden="true"></div><video id="mirVid" playsinline muted autoplay draggable="false"></video><div class="mres" aria-hidden="true"></div>
+  <div class="mbar"><button id="mMinus" aria-label="Smaller">−</button><button id="mPlus" aria-label="Bigger">+</button><button id="mFull" aria-label="Full screen">⤢</button><button id="mClose" aria-label="Close mirror">✕</button></div></div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const live=$("live"),statusEl=$("status");
+let dc=null,role=null,pc=null;
+let rcRaf=0,dz=1,autoMirror=true,recT0=0;
+let stream=null,facing="environment",actx=null,audioDest=null,recorder=null,chunks=[],recognizing=false,recog=null;
+const segments=[];             // final speech segments
+let heading=null,tilt=null;     // from device orientation
+const pano={on:false,auto:false,frames:[],cum:0,lastH:null,next:0,n:12};
+const STEP=30,FOV=62;           // degrees per shot, estimated horizontal field of view
+
+function say(t){statusEl.textContent=t;try{if(role==="host"&&dc&&dc.readyState==="open")dc.send(JSON.stringify({t:"status",text:t}))}catch(e){}}
+
+/* ---------- dial ---------- */
+const dial=$("dial");
+function arc(i){const a0=(i*STEP-90+2)*Math.PI/180,a1=((i+1)*STEP-90-2)*Math.PI/180,r=42;
+  return `M${50+r*Math.cos(a0)} ${50+r*Math.sin(a0)} A${r} ${r} 0 0 1 ${50+r*Math.cos(a1)} ${50+r*Math.sin(a1)}`}
+let html="";for(let i=0;i<12;i++)html+=`<path class="seg" id="s${i}" d="${arc(i)}"/>`;
+html+=`<line class="needle" id="needle" x1="50" y1="50" x2="50" y2="14"/><circle class="bub" id="bub" cx="50" cy="50" r="5"/><text x="50" y="96">level</text>`;
+dial.innerHTML=html;
+function paint(){
+  for(let i=0;i<12;i++)$("s"+i).classList.toggle("on",i<pano.frames.length);
+  $("needle").style.transform=`rotate(${heading||0}deg)`;
+  const b=$("bub");
+  if(tilt){const dx=Math.max(-30,Math.min(30,tilt.x*2)),dy=Math.max(-30,Math.min(30,tilt.y*2));
+    b.setAttribute("cx",50+dx);b.setAttribute("cy",50+dy);b.classList.toggle("ok",Math.hypot(tilt.x,tilt.y)<5)}
+}
+
+/* ---------- camera + audio chain ---------- */
+async function getMedia(){
+  // Try the best settings first, then step down so a busy microphone or a camera that dislikes
+  // high resolution does not stop the whole app.
+  const dev=camId?{deviceId:{exact:camId}}:{facingMode:facing};
+  const aud={echoCancellation:true,noiseSuppression:true,autoGainControl:true};
+  const tries=[
+    {video:{...dev,width:{ideal:1920},height:{ideal:1080}},audio:aud},
+    {video:{...dev,width:{ideal:1280},height:{ideal:720}},audio:aud},
+    {video:{...dev},audio:false,note:"No microphone: the camera works, but sound is off."},
+    {video:true,audio:false,note:"Basic camera mode: no microphone and default settings."}
+  ];
+  let last=null;
+  for(let round=0;round<2;round++){
+    for(const t of tries){
+      try{
+        const {note,...c}=t;const m=await navigator.mediaDevices.getUserMedia(c);
+        if(note)setTimeout(()=>say(note),400);
+        return m;
+      }catch(e){last=e;if(e.name==="NotAllowedError"||e.name==="NotFoundError"||e.name==="SecurityError")throw e}
+    }
+    await sleep(900);                      // a camera that was just closed can take a moment to free up
+  }
+  throw last;
+}
+async function openCamera(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=await getMedia();
+  live.srcObject=stream;await live.play();
+  {const fm=stream.getVideoTracks()[0].getSettings().facingMode;autoMirror=(fm==="user"||!fm);dz=1}setupCaps();view();
+  if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+  await actx.resume();
+  // smooth-sound chain: cut rumble and hiss, even out loudness
+  if(!stream.getAudioTracks().length){audioDest=null;afterOpen();return}
+  const src=actx.createMediaStreamSource(new MediaStream(stream.getAudioTracks()));
+  const hp=actx.createBiquadFilter();hp.type="highpass";hp.frequency.value=100;
+  const lp=actx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=7500;
+  const comp=actx.createDynamicsCompressor();comp.threshold.value=-28;comp.ratio.value=4;
+  const g=actx.createGain();g.gain.value=1.4;
+  audioDest=actx.createMediaStreamDestination();
+  src.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(g);g.connect(audioDest);
+  afterOpen();
+}
+$("start").onclick=async()=>{
+  $("gateMsg").textContent="";
+  try{
+    await openCamera();
+    $("gate").style.display="none";
+    ["photo","video","pano","talk","flip","rvid","auto","dual","both","full","mir"].forEach(k=>$(k).disabled=false);
+    say("Camera ready.");camOn=true;updatePwr();keepAwake(true);
+    startOrientation();
+  }catch(e){
+    const why={
+      NotReadableError:"Your camera is busy or blocked. Close anything else that may be using it (Zoom, Teams, Meet, Camera app, other browser tabs or windows, including another copy of this page), then tap Start camera again. On Windows also check Settings > Privacy > Camera and allow desktop apps.",
+      NotAllowedError:"Camera access was blocked. Click the camera icon in the address bar, choose Allow, then tap Start camera again.",
+      NotFoundError:"No camera was found on this device.",
+      OverconstrainedError:"This camera does not support the requested settings.",
+      SecurityError:"The browser blocked camera access here. Open this file in its own tab, or serve it from localhost."
+    };
+    $("gateMsg").textContent=(why[e.name]||("Could not open the camera ("+(e.name||"error")+")."))+" ["+(e.name||"error")+"]";
+  }
+};
+$("flip").onclick=async()=>{facing=facing==="environment"?"user":"environment";try{await openCamera()}catch(e){say("Could not switch camera.")}};
+
+/* ---------- orientation (level + heading) ---------- */
+async function startOrientation(){
+  try{
+    if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function"){
+      const r=await DeviceOrientationEvent.requestPermission();if(r!=="granted")return}
+    window.addEventListener("deviceorientation",e=>{
+      if(e.webkitCompassHeading!=null)heading=e.webkitCompassHeading;
+      else if(e.alpha!=null)heading=(360-e.alpha)%360;
+      if(e.beta!=null&&e.gamma!=null)tilt={x:e.gamma,y:e.beta-90};
+      panoTick();rvTick();paint();
+    });
+  }catch(e){}
+}
+
+/* ---------- photo ---------- */
+function frameCanvas(maxW){
+  const w=live.videoWidth,h=live.videoHeight,s=Math.min(1,maxW/w);
+  const c=document.createElement("canvas");c.width=Math.round(w*s);c.height=Math.round(h*s);
+  c.getContext("2d").drawImage(live,0,0,c.width,c.height);return c;
+}
+function addItem(kind,url,name){
+  const g=$("gal");if(!g.querySelector(".item"))g.innerHTML="";
+  const d=document.createElement("div");d.className="item";
+  if(kind==="video"){const v=document.createElement("video");v.src=url;v.controls=true;v.playsInline=true;d.appendChild(v);addTrim(d,v)}
+  else{const im=document.createElement("img");im.src=url;im.alt=name;
+    if(kind==="pano"){const w=document.createElement("div");w.className="scroll";w.appendChild(im);d.appendChild(w)}else d.appendChild(im)}
+  const a=document.createElement("a");a.href=url;a.download=name;a.textContent="Save "+name;d.appendChild(a);
+  g.prepend(d);
+}
+async function takePhoto(){
+  $("photo").disabled=true;say("Taking the sharpest shot…");
+  try{
+    let best=null;const n=+$("pBurst").value>1?+$("pBurst").value:(ic?3:6);
+    for(let i=0;i<n;i++){const c=dual.on?mixCopy():await grab(resMax());const sc=sharp(c);if(!best||sc>best.sc)best={c,sc};await sleep(90)}
+    if(best.c.width*best.c.height<=24e6)enhance(best.c);
+    (dual.on?best.c:applyAdjust(best.c)).toBlob(b=>{const name="photo-"+Date.now()+fmtExt();addItem("photo",URL.createObjectURL(b),name);sendFile("photo",name,b);say("Best photo saved to Captures.")},fmtType(),.95);
+  }catch(e){say("Photo failed. Try again.")}
+  $("photo").disabled=false;
+}
+$("photo").onclick=()=>countdown(takePhoto);
+
+/* ---------- video ---------- */
+$("video").onclick=()=>{
+  if(recorder&&recorder.state==="recording"){recorder.stop();return}
+  countdown(startVideo);
+};
+function startVideo(){
+  const tracks=[...(dual.on?mix.captureStream(30).getVideoTracks():(needsPipe()?startRecCanvas().getVideoTracks():stream.getVideoTracks())),...(audioDest?audioDest.stream.getAudioTracks():[])];
+  const types=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/mp4","video/webm"];
+  const mime=types.find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t));
+  if(!mime){say("This browser cannot record video.");return}
+  chunks=[];recorder=new MediaRecorder(new MediaStream(tracks),{mimeType:mime,videoBitsPerSecond:({720:6e6,1080:12e6,2160:35e6})[$("pVq").value]||12e6});
+  recorder.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  recorder.onstop=()=>{
+    cancelAnimationFrame(rcRaf);const b=new Blob(chunks,{type:mime.split(";")[0]});
+    addItem("video",URL.createObjectURL(b),"video-"+Date.now()+(mime.includes("mp4")?".mp4":".webm"));
+    $("video").textContent="Record video";$("video").classList.remove("rec");
+    $("badge").classList.remove("on");say("Video saved to Captures.");
+  };
+  recorder.start(1000);recT0=Date.now();
+  $("video").textContent="Stop recording";$("video").classList.add("rec");
+  $("badge").classList.add("on");say("Recording with cleaned audio…");
+}
+
+/* ---------- 360 panorama ---------- */
+function resetPano(){pano.on=false;pano.auto=false;pano.frames=[];pano.cum=0;pano.lastH=null;pano.next=0;
+  $("pano").textContent="360° panorama";$("shot").disabled=true;paint()}
+$("pano").onclick=()=>{
+  if(pano.on){if(pano.frames.length>1)finishPano();else{resetPano();say("Panorama cancelled.")}return}
+  resetPano();if(tt.ready){autoPano();return}pano.on=true;pano.lastH=heading;
+  $("pano").textContent="Finish panorama";$("shot").disabled=false;
+  say(heading==null?"No compass found: turn a little, then tap Add shot each time.":"Hold level, then turn slowly in one direction. Shots are taken every 30°.");
+  addShot();
+};
+$("shot").onclick=()=>{if(pano.on)addShot()};
+function addShot(){
+  if(!pano.on||pano.frames.length>=pano.n)return;
+  pano.frames.push(frameCanvas(960));paint();
+  if(pano.frames.length>=pano.n)finishPano();
+}
+function panoTick(){
+  if(!pano.on||pano.auto||heading==null||pano.lastH==null)return;
+  let d=heading-pano.lastH;d=((d+540)%360)-180;pano.lastH=heading;pano.cum+=d;
+  const level=!tilt||Math.hypot(tilt.x,tilt.y)<8;
+  if(!level){say("Tilted. Hold the camera level to continue.");return}
+  if(Math.abs(pano.cum)>=pano.next+STEP){pano.next+=STEP;say("Shot "+(pano.frames.length+1)+" of "+pano.n);addShot()}
+}
+function finishPano(){
+  const f=pano.frames,n=f.length,fw=f[0].width,fh=f[0].height;
+  const sw=Math.round(fw*STEP/FOV);
+  const out=document.createElement("canvas");out.width=sw*n;out.height=fh;
+  const ctx=out.getContext("2d");
+  const ordered=pano.cum<0?f.slice().reverse():f;   // turning left puts new shots on the left
+  ordered.forEach((c,i)=>ctx.drawImage(c,(fw-sw)/2,0,sw,fh,i*sw,0,sw,fh));
+  out.toBlob(b=>{addItem("pano",URL.createObjectURL(b),"panorama-"+Date.now()+".jpg");say("Panorama saved ("+n+" shots).")},"image/jpeg",.9);
+  resetPano();
+}
+
+/* ---------- transcript: dedupe, correct, summarize ---------- */
+const FILL=/\b(?:um+|uh+|er+|erm|ah+|you know|i mean)\b,?/gi;
+const REP=/\b(\w+(?:\s+\w+){0,2})(?:[\s,]+\1\b)+/gi;
+const STOP=new Set("a an the and or but if so of to in on at for with as is are was were be been it its this that these those i you he she we they them his her our your my me do does did have has had not no yes from by about into than then there here what which who will would can could should just very really also".split(" "));
+function fixSentence(s){
+  s=s.replace(FILL,"").replace(REP,"$1").replace(/\s{2,}/g," ").trim();
+  if(!s)return "";
+  s=s.replace(/\bi\b/g,"I").replace(/\bi'm\b/gi,"I’m").replace(/\bdont\b/gi,"don’t").replace(/\bcant\b/gi,"can’t")
+     .replace(/\bwont\b/gi,"won’t").replace(/\bim\b/gi,"I’m").replace(/\bthats\b/gi,"that’s").replace(/\s+([,.!?])/g,"$1");
+  s=s[0].toUpperCase()+s.slice(1);
+  return /[.!?]$/.test(s)?s:s+".";
+}
+function jaccard(a,b){const A=new Set(a.toLowerCase().match(/[a-z’']+/g)||[]),B=new Set(b.toLowerCase().match(/[a-z’']+/g)||[]);
+  let i=0;A.forEach(w=>B.has(w)&&i++);return i/((A.size+B.size-i)||1)}
+function buildText(){
+  const kept=[];
+  segments.forEach(seg=>(seg.match(/[^.!?]+[.!?]?/g)||[]).forEach(p=>{
+    const s=fixSentence(p);if(s&&!kept.some(k=>jaccard(k,s)>.8))kept.push(s)}));
+  return kept;
+}
+function summarize(sents,k=4){
+  if(sents.length<=k)return sents.filter(s=>s.split(" ").length>3||sents.length<3);
+  const freq={};sents.join(" ").toLowerCase().match(/[a-z’']+/g).forEach(w=>{if(!STOP.has(w))freq[w]=(freq[w]||0)+1});
+  const sc=sents.map((s,i)=>[(s.toLowerCase().match(/[a-z’']+/g)||[]).reduce((a,w)=>a+(freq[w]||0),0)/Math.pow(s.split(" ").length,.7),i]);
+  return sc.sort((a,b)=>b[0]-a[0]).slice(0,k).map(x=>x[1]).sort((a,b)=>a-b).map(i=>sents[i]);
+}
+function refresh(){
+  const s=buildText();
+  $("clean").textContent=s.join(" ")||"Listening…";
+  const sm=summarize(s);$("sum").textContent=sm.length?sm.map(x=>"• "+x).join("\n"):"The summary appears here.";
+  $("copy").disabled=!s.length;
+}
+$("talk").onclick=()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){say("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");return}
+  if(recognizing){recognizing=false;recog.stop();$("talk").textContent="Transcribe";$("talk").classList.remove("rec");say("Transcription stopped.");return}
+  recog=new SR();recog.continuous=true;recog.interimResults=false;recog.lang=navigator.language||"en-US";
+  recog.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)segments.push(e.results[i][0].transcript);refresh()};
+  recog.onend=()=>{if(recognizing){try{recog.start()}catch(_){}}};
+  recog.onerror=e=>{if(e.error==="not-allowed"){recognizing=false;say("Microphone access was blocked for speech recognition.")}else if(e.error==="network"){recognizing=false;$("talk").textContent="Transcribe";$("talk").classList.remove("rec");say("Transcription needs an internet connection in this browser. Camera, video, and panorama still work offline.")}};
+  recognizing=true;recog.start();$("talk").textContent="Stop transcribing";$("talk").classList.add("rec");say("Listening…");
+};
+$("copy").onclick=async()=>{
+  const t=$("clean").textContent+"\n\nSummary:\n"+$("sum").textContent;
+  try{await navigator.clipboard.writeText(t);say("Copied.")}catch(e){say("Copy is blocked here. Select the text and copy it manually.")}
+};
+/* ---------- automatic rotation: ESP32 turntable over Bluetooth ---------- */
+const NUS="6e400001-b5a3-f393-e0a9-e50e24dcca9e",RXC="6e400002-b5a3-f393-e0a9-e50e24dcca9e",TXC="6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+const tt={ready:false,rx:null,wait:null};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+$("tt").onclick=async()=>{
+  if(!navigator.bluetooth){say("Web Bluetooth is not available here. Use Chrome on Android or desktop, in its own tab.");return}
+  try{
+    const dev=await navigator.bluetooth.requestDevice({filters:[{services:[NUS]}]});
+    const srv=await dev.gatt.connect(),svc=await srv.getPrimaryService(NUS);
+    tt.rx=await svc.getCharacteristic(RXC);
+    const tx=await svc.getCharacteristic(TXC);await tx.startNotifications();
+    tx.addEventListener("characteristicvaluechanged",e=>{
+      if(new TextDecoder().decode(e.target.value).includes("OK")&&tt.wait){const f=tt.wait;tt.wait=null;f()}});
+    dev.addEventListener("gattserverdisconnected",()=>{tt.ready=false;$("tt").textContent="Connect turntable";say("Turntable disconnected.")});
+    tt.ready=true;$("tt").textContent="Turntable connected";
+    say("Turntable connected. 360° panorama now rotates automatically.");
+  }catch(e){say("Could not connect the turntable.")}
+};
+function turn(deg){
+  return new Promise(res=>{
+    const t=setTimeout(()=>{tt.wait=null;res()},15000);
+    tt.wait=()=>{clearTimeout(t);res()};
+    tt.rx.writeValue(new TextEncoder().encode("R"+deg+"\n")).catch(()=>{clearTimeout(t);tt.wait=null;res()});
+  });
+}
+async function autoPano(){
+  pano.on=true;pano.auto=true;$("pano").textContent="Stop panorama";
+  for(let i=0;i<pano.n&&pano.on;i++){
+    say("Shot "+(i+1)+" of "+pano.n);
+    await sleep(700);                 // let the image settle after the move
+    if(!pano.on)break;
+    addShot();                        // the last shot finishes and stitches
+    if(!pano.on)break;
+    await turn(STEP);
+  }
+}
+
+/* ---------- far or near: focus, exposure, framing ---------- */
+let autoOn=true,caps={},ic=null,ec=0,zoom=1;
+async function applyAdv(o){try{await stream.getVideoTracks()[0].applyConstraints({advanced:[o]})}catch(e){}}
+function setupCaps(){
+  const t=stream.getVideoTracks()[0];caps=t.getCapabilities?t.getCapabilities():{};
+  ic=window.ImageCapture?new ImageCapture(t):null;ec=0;
+  const adv={};
+  ["focusMode","exposureMode","whiteBalanceMode"].forEach(k=>{if((caps[k]||[]).includes("continuous"))adv[k]="continuous"});
+  if(Object.keys(adv).length)applyAdv(adv);
+  const z=$("zoom");
+  if(caps.zoom){z.min=caps.zoom.min;z.max=caps.zoom.max;z.step=caps.zoom.step||.1;z.value=zoom=caps.zoom.min||1;z.hidden=false}else{z.min=1;z.max=3;z.step=.1;z.value=1;z.hidden=false}
+}
+$("zoom").oninput=e=>{zoom=+e.target.value;if(caps.zoom)applyAdv({zoom});else{dz=zoom;view()}};
+$("auto").onclick=()=>{autoOn=!autoOn;$("auto").textContent="Auto-adjust: "+(autoOn?"on":"off")};
+const probe=document.createElement("canvas");probe.width=64;probe.height=48;
+async function tune(){
+  if(!stream||!autoOn||pano.on||live.readyState<2)return;
+  const x=probe.getContext("2d",{willReadFrequently:true});x.drawImage(live,0,0,64,48);
+  const d=x.getImageData(0,0,64,48).data;let sum=0;
+  for(let i=0;i<d.length;i+=4)sum+=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+  const mean=sum/(d.length/4);
+  if(caps.exposureCompensation&&Math.abs(mean-118)>14){
+    const c=caps.exposureCompensation;
+    ec=Math.max(c.min,Math.min(c.max,ec+(118-mean)/118*(c.max-c.min)*.15));applyAdv({exposureCompensation:ec});
+  }
+  const recording=recorder&&recorder.state==="recording";
+  if(window.FaceDetector&&caps.zoom&&!recording){           // subject far: zoom in; too close: zoom out
+    try{
+      const f=await (tune.fd||(tune.fd=new FaceDetector({fastMode:true,maxDetectedFaces:3}))).detect(live);
+      if(f.length){
+        const w=Math.max(...f.map(r=>r.boundingBox.width))/live.videoWidth;let z=zoom;
+        if(w<.12)z*=1.12;else if(w>.5)z/=1.12;
+        z=Math.max(caps.zoom.min,Math.min(caps.zoom.max,z));
+        if(Math.abs(z-zoom)>.01){zoom=z;$("zoom").value=z;applyAdv({zoom:z})}
+      }
+    }catch(e){}
+  }
+}
+setInterval(tune,1200);
+
+/* ---------- clear, best photos ---------- */
+async function grab(max){
+  if(ic){try{
+    const bm=await createImageBitmap(await ic.takePhoto(await photoOpts()));     // full-sensor still where supported
+    const k=Math.min(1,max/bm.width),c=document.createElement("canvas");c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);
+    c.getContext("2d").drawImage(bm,0,0,c.width,c.height);return c;
+  }catch(e){ic=null}}
+  return frameCanvas(max);
+}
+function sharp(c){                                               // variance of Laplacian = sharpness score
+  const w=320,h=Math.round(c.height*w/c.width),t=document.createElement("canvas");t.width=w;t.height=h;
+  const x=t.getContext("2d",{willReadFrequently:true});x.drawImage(c,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data,g=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+  let m=0,m2=0,n=0;
+  for(let y=1;y<h-1;y++)for(let u=1;u<w-1;u++){const i=y*w+u,l=4*g[i]-g[i-1]-g[i+1]-g[i-w]-g[i+w];m+=l;m2+=l*l;n++}
+  return m2/n-(m/n)*(m/n);
+}
+function enhance(c){                                             // auto-levels, brightness balance, gentle sharpen
+  const x=c.getContext("2d",{willReadFrequently:true}),w=c.width,h=c.height,im=x.getImageData(0,0,w,h),d=im.data,hist=new Uint32Array(256);
+  let sum=0,cnt=0;
+  for(let i=0;i<d.length;i+=16){const l=(.299*d[i]+.587*d[i+1]+.114*d[i+2])|0;hist[l]++;sum+=l;cnt++}
+  let a=0,lo=0,hi=255;
+  for(let v=0;v<256;v++){a+=hist[v];if(a>=cnt*.01){lo=v;break}}
+  a=0;for(let v=255;v>=0;v--){a+=hist[v];if(a>=cnt*.01){hi=v;break}}
+  if(hi-lo<40){lo=0;hi=255}
+  const mean=Math.min(200,Math.max(40,((sum/cnt)-lo)/(hi-lo)*255));
+  const gam=Math.min(1.5,Math.max(.7,Math.log(.46)/Math.log(mean/255)));
+  const lut=new Uint8ClampedArray(256);
+  for(let v=0;v<256;v++)lut[v]=255*Math.pow(Math.min(1,Math.max(0,(v-lo)/(hi-lo))),gam);
+  for(let i=0;i<d.length;i+=4){d[i]=lut[d[i]];d[i+1]=lut[d[i+1]];d[i+2]=lut[d[i+2]]}
+  const src=new Uint8ClampedArray(d),k=.35,r=w*4;
+  for(let y=1;y<h-1;y++)for(let u=1;u<w-1;u++){const i=(y*w+u)*4;
+    for(let q=0;q<3;q++){const j=i+q;d[j]=src[j]*(1+4*k)-k*(src[j-4]+src[j+4]+src[j-r]+src[j+r])}}
+  x.putImageData(im,0,0);
+}
+
+/* ---------- rotating video (at least 180 degrees) ---------- */
+const rv={on:false,cum:0,lastH:null,total:180,done:null};
+function send(cmd,ms=15000){
+  return new Promise(res=>{
+    const t=setTimeout(()=>{tt.wait=null;res()},ms);tt.wait=()=>{clearTimeout(t);res()};
+    tt.rx.writeValue(new TextEncoder().encode(cmd+"\n")).catch(()=>{clearTimeout(t);tt.wait=null;res()});
+  });
+}
+function rvTick(){
+  if(!rv.on||heading==null)return;
+  if(rv.lastH==null){rv.lastH=heading;return}
+  let d=heading-rv.lastH;d=((d+540)%360)-180;rv.lastH=heading;rv.cum+=Math.abs(d);
+  say("Turn slowly… "+Math.min(rv.total,Math.round(rv.cum))+"° of "+rv.total+"°");
+  if(rv.cum>=rv.total&&rv.done){const f=rv.done;rv.done=null;f()}
+}
+async function rotatingVideo(){
+  const total=+$("rvDeg").value;
+  skipTimer=true;$("video").click();skipTimer=false;await sleep(600);
+  $("rvid").textContent="Stop sweep";
+  if(tt.ready){
+    const dps=15;                                  // slow, smooth turntable speed
+    say("Turntable sweeping "+total+"°…");
+    await send("V"+dps,3000);await send("R"+total,total/dps*1000+8000);await send("V120",3000);
+  }else if(heading!=null){
+    rv.total=total;rv.cum=0;rv.lastH=null;rv.on=true;
+    await new Promise(r=>{rv.done=r});
+    rv.on=false;
+  }else{say("No compass found: filming for "+Math.round(total/15)+" s. Turn slowly by hand.");await sleep(total/15*1000)}
+  if(recorder&&recorder.state==="recording")$("video").click();
+  $("rvid").textContent="Rotating video";
+}
+$("rvid").onclick=()=>{
+  if(recorder&&recorder.state==="recording"){
+    if(tt.ready&&tt.rx)tt.rx.writeValue(new TextEncoder().encode("X\n")).catch(()=>{});
+    if(rv.on){rv.on=false;if(rv.done){const f=rv.done;rv.done=null;f()}}else $("video").click();
+    $("rvid").textContent="Rotating video";return;
+  }
+  rotatingVideo();
+};
+
+/* ---------- other screens: WebRTC with copy/paste pairing (no server, no internet) ---------- */
+const box=$("rBox");let incoming=null;
+function newPC(){
+  pc=new RTCPeerConnection({iceServers:[]});
+  pc.ontrack=e=>{$("remoteVid").srcObject=e.streams[0];$("remoteWrap").hidden=false};
+  pc.ondatachannel=e=>wire(e.channel);
+  pc.onconnectionstatechange=()=>{if(["failed","disconnected"].includes(pc.connectionState))statusEl.textContent="Screen link lost."};
+}
+function wire(ch){
+  dc=ch;dc.binaryType="arraybuffer";
+  dc.onopen=()=>{
+    $("rCtl").hidden=role!=="viewer";statusEl.textContent="Screens connected.";
+    if(role==="host"){dc.send(JSON.stringify({t:"side",text:$("side").textContent,dev:myDev}));setLink(myDev,"laptop",true)}
+    else{dc.send(JSON.stringify({t:"hello",dev:myDev}));setLink("phone",myDev,true)}
+  };
+  dc.onmessage=e=>{
+    if(typeof e.data==="string"){
+      const m=JSON.parse(e.data);
+      if(m.t==="cmd"&&role==="host"){const id=({photo:"photo",video:"video",rvid:"rvid",pano:"pano",flip:"flip"})[m.c];if(id&&!$(id).disabled)$(id).click()}
+      else if(m.t==="status"&&role==="viewer")statusEl.textContent=m.text;
+      else if(m.t==="side"&&role==="viewer"){$("remoteSide").textContent="Showing the "+m.dev+": "+m.text;setLink(m.dev,myDev,true)}
+      else if(m.t==="hello"&&role==="host")setLink(myDev,m.dev,true);
+      else if(m.t==="file")incoming={...m,parts:[],got:0};
+    }else if(incoming){
+      incoming.parts.push(e.data);incoming.got+=e.data.byteLength;
+      if(incoming.got>=incoming.size){
+        addItem(incoming.kind,URL.createObjectURL(new Blob(incoming.parts,{type:"image/jpeg"})),incoming.name);
+        incoming=null;statusEl.textContent="Photo received from the camera.";
+      }
+    }
+  };
+}
+async function sendFile(kind,name,blob){
+  if(role!=="host"||!dc||dc.readyState!=="open")return;
+  const buf=await blob.arrayBuffer();
+  dc.send(JSON.stringify({t:"file",kind,name,size:buf.byteLength}));
+  for(let o=0;o<buf.byteLength;o+=16384){while(dc.bufferedAmount>1e6)await sleep(50);dc.send(buf.slice(o,o+16384))}
+}
+const gathered=()=>new Promise(r=>{
+  if(pc.iceGatheringState==="complete")return r();
+  pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==="complete")r()};setTimeout(r,3500);
+});
+$("rShare").onclick=async()=>{
+  if(!stream){say("Start the camera first, then share it.");return}
+  role="host";newPC();
+  stream.getVideoTracks().forEach(t=>pc.addTrack(t,stream));
+  if(audioDest)audioDest.stream.getAudioTracks().forEach(t=>pc.addTrack(t,audioDest.stream));
+  wire(pc.createDataChannel("ctl"));
+  await pc.setLocalDescription(await pc.createOffer());await gathered();
+  box.value=btoa(JSON.stringify(pc.localDescription));
+  say("Copy this code to the other screen. Paste its reply here and tap Connect.");
+};
+$("rWatch").onclick=()=>{role="viewer";newPC();box.value="";say("Paste the camera’s code here, then tap Connect.")};
+$("rApply").onclick=async()=>{
+  try{
+    const d=JSON.parse(atob(box.value.trim()));
+    if(role==="viewer"){
+      await pc.setRemoteDescription(d);await pc.setLocalDescription(await pc.createAnswer());await gathered();
+      box.value=btoa(JSON.stringify(pc.localDescription));
+      statusEl.textContent="Copy this reply code to the camera device and tap Connect there.";
+    }else if(role==="host"){await pc.setRemoteDescription(d)}
+  }catch(e){statusEl.textContent="That code did not work. Copy the whole code and try again."}
+};
+$("rCopy").onclick=async()=>{try{await navigator.clipboard.writeText(box.value);statusEl.textContent="Code copied."}catch(e){box.select();statusEl.textContent="Select the code and copy it."}};
+["photo","video","rvid","pano","flip"].forEach(c=>{$("r_"+c).onclick=()=>{if(dc&&dc.readyState==="open")dc.send(JSON.stringify({t:"cmd",c}))}});
+
+/* ---------- front/back switch + phone/laptop icons ---------- */
+const ICON=p=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const PHONE=ICON('<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>');
+const LAPTOP=ICON('<rect x="4" y="5" width="16" height="10" rx="1.5"/><path d="M2 19h20"/>');
+const myDev=(/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)||matchMedia("(pointer:coarse)").matches)?"phone":"laptop";
+const devIcon=k=>k==="laptop"?LAPTOP:PHONE;
+function setLink(cam,scr,on){
+  $("lkCam").innerHTML=devIcon(cam);$("lkScr").innerHTML=devIcon(scr);$("link").classList.toggle("on",!!on);
+  $("lkTxt").textContent=on?"Connected: "+cam+" camera shown on the "+scr+" screen.":"Not connected";
+}
+setLink("phone","laptop",false);
+$("flip").innerHTML=devIcon(myDev)+"Switch front / back";
+$("rShare").innerHTML=PHONE+"Share this camera";
+$("rWatch").innerHTML=LAPTOP+"Watch on this screen";
+let cams=[],camId=null;
+async function listCams(){cams=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput")}
+function curTrack(){return stream&&stream.getVideoTracks()[0]}
+async function afterOpen(){
+  const t=curTrack(),st=t.getSettings();
+  const side=st.facingMode==="environment"?"Back camera":st.facingMode==="user"?"Front camera":(t.label||"Camera");
+  $("side").textContent=side;$("chipIcon").innerHTML=devIcon(myDev);$("chip").hidden=false;
+  $("mirVid").srcObject=stream;$("mirVid").play().catch(()=>{});
+  renderSpecs();if($("pVq").value!=="1080"||$("pFps").value!=="30")applyVideoQ();
+  if(pc&&role==="host"){                       // keep the other screen's picture and sound live after a switch
+    for(const snd of pc.getSenders()){
+      if(snd.track&&snd.track.kind==="video")await snd.replaceTrack(t).catch(()=>{});
+      else if(snd.track&&snd.track.kind==="audio"&&audioDest)await snd.replaceTrack(audioDest.stream.getAudioTracks()[0]).catch(()=>{});
+    }
+    if(dc&&dc.readyState==="open")dc.send(JSON.stringify({t:"side",text:side,dev:myDev}));
+  }
+}
+$("flip").onclick=async()=>{
+  if(recorder&&recorder.state==="recording"){say("Stop recording before switching cameras.");return}
+  if(pano.on){say("Finish the panorama first.");return}
+  if(dual.on)stopDual();
+  const id0=curTrack().getSettings().deviceId;
+  facing=facing==="environment"?"user":"environment";camId=null;
+  try{await openCamera()}catch(e){}
+  let id1=curTrack()?curTrack().getSettings().deviceId:null;
+  if(id1===id0){                                // not a phone: cycle through any other cameras plugged in
+    try{
+      await listCams();
+      if(cams.length>1){const i=cams.findIndex(c=>c.deviceId===id0);camId=cams[(i+1)%cams.length].deviceId;await openCamera();id1=curTrack().getSettings().deviceId}
+    }catch(e){}
+  }
+  if(id1===id0)say("This "+myDev+" has only one camera. For the other side, open this page on your phone, tap Share this camera, then tap Watch on this screen here.");
+  else say("Now using: "+$("side").textContent);
+};
+
+/* ---------- both sides at once: live picture-in-picture, photos and video ---------- */
+const mix=$("mix"),mctx=mix.getContext("2d");mix.width=1440;mix.height=1080;
+const dual={on:false,swap:false,nameB:"",mirrorB:false,src:null,stream2:null,raf:0};
+function cover(v,x,y,w,h,mirror){
+  const vw=v.videoWidth,vh=v.videoHeight;if(!vw)return;
+  const k=Math.max(w/vw,h/vh),sw=w/k,sh=h/k,sx=(vw-sw)/2,sy=(vh-sh)/2;
+  mctx.save();mctx.beginPath();mctx.rect(x,y,w,h);mctx.clip();
+  if(mirror){mctx.translate(x+w,y);mctx.scale(-1,1);mctx.drawImage(v,sx,sy,sw,sh,0,0,w,h)}
+  else mctx.drawImage(v,sx,sy,sw,sh,x,y,w,h);
+  mctx.restore();
+}
+function tag(t,x,y){
+  mctx.font="600 28px system-ui,sans-serif";const w=mctx.measureText(t).width+24;
+  mctx.fillStyle="rgba(0,0,0,.6)";mctx.fillRect(x,y,w,44);mctx.fillStyle="#fff";mctx.fillText(t,x+12,y+31);
+}
+function drawMix(){
+  if(!dual.on)return;
+  const mA=mirrorNow(),mB=dual.mirrorB,nameA=$("side").textContent;
+  const main=dual.swap?dual.src:live,small=dual.swap?live:dual.src;
+  mctx.fillStyle="#000";mctx.fillRect(0,0,1440,1080);
+  mctx.filter=canFilter?filterStr():"none";cover(main,0,0,1440,1080,dual.swap?mB:mA);
+  cover(small,936,696,480,360,dual.swap?mA:mB);mctx.filter="none";
+  mctx.strokeStyle="#fff";mctx.lineWidth=4;mctx.strokeRect(936,696,480,360);
+  tag(dual.swap?dual.nameB:nameA,24,24);tag(dual.swap?nameA:dual.nameB,940,704);
+  dual.raf=requestAnimationFrame(drawMix);
+}
+function mixCopy(){const c=document.createElement("canvas");c.width=mix.width;c.height=mix.height;c.getContext("2d").drawImage(mix,0,0);return c}
+function startDual(){
+  dual.on=true;dual.swap=false;mix.hidden=false;$("dual").textContent="Single view";
+  say("Both sides are live. Tap the picture to swap big and small. Photos and videos now include both.");
+  drawMix();
+}
+function stopDual(){
+  dual.on=false;cancelAnimationFrame(dual.raf);mix.hidden=true;$("dual").textContent="Both sides live";
+  if(dual.stream2){dual.stream2.getTracks().forEach(t=>t.stop());dual.stream2=null;$("live2").srcObject=null}
+}
+mix.onclick=()=>{dual.swap=!dual.swap};
+async function openSecond(){
+  try{
+    await listCams();
+    const t0=curTrack(),s0=t0.getSettings(),fm=s0.facingMode;
+    const other=cams.find(c=>c.deviceId&&c.deviceId!==s0.deviceId);
+    let want;
+    if(fm==="user"||fm==="environment")want={facingMode:fm==="user"?"environment":"user"};
+    else if(other)want={deviceId:{exact:other.deviceId}};
+    else return false;
+    const s2=await navigator.mediaDevices.getUserMedia({video:{...want,width:{ideal:1280},height:{ideal:720}}});
+    await sleep(500);
+    const t2=s2.getVideoTracks()[0],st=t2.getSettings();
+    if(t0.readyState!=="live"||st.deviceId===s0.deviceId){      // this device cannot run two cameras at once
+      s2.getTracks().forEach(t=>t.stop());
+      if(t0.readyState!=="live")await openCamera();
+      return false;
+    }
+    dual.stream2=s2;$("live2").srcObject=s2;await $("live2").play();
+    dual.nameB=st.facingMode==="environment"?"Back camera":st.facingMode==="user"?"Front camera":(t2.label||"Camera 2");
+    dual.mirrorB=st.facingMode==="user";dual.src=$("live2");
+    return true;
+  }catch(e){return false}
+}
+$("dual").onclick=async()=>{
+  if(dual.on){stopDual();say("Single view.");return}
+  if(recorder&&recorder.state==="recording"){say("Stop recording first.");return}
+  say("Looking for a second camera…");
+  const rv2=$("remoteVid");
+  if(role==="viewer"&&rv2.srcObject&&rv2.readyState>1){            // laptop screen + paired phone camera
+    dual.nameB=($("remoteSide").textContent.split(": ")[1]||"Phone camera");
+    dual.mirrorB=/front/i.test(dual.nameB);dual.src=rv2;startDual();return;
+  }
+  if(await openSecond()){startDual();return}
+  say("This device can’t run its front and back cameras at the same time. Pair your phone and laptop under “Use another screen” to see both together, or tap “Both sides photo” to shoot one side, then the other.");
+};
+
+/* ---------- both sides photo, one after the other (works on any device with two cameras) ---------- */
+async function shootBest(){
+  let best=null;const n=ic?3:6;
+  for(let i=0;i<n;i++){const c=await grab(resMax());const sc=sharp(c);if(!best||sc>best.sc)best={c,sc};await sleep(90)}
+  if(best.c.width*best.c.height<=24e6)enhance(best.c);return applyAdjust(best.c);
+}
+const blobOf=(c,q=.95)=>new Promise(r=>c.toBlob(r,"image/jpeg",q));
+$("both").onclick=async()=>{
+  if(dual.on){say("Both sides are already live: just tap Best photo.");return}
+  if((recorder&&recorder.state==="recording")||pano.on){say("Finish the current recording or panorama first.");return}
+  $("both").disabled=true;
+  try{
+    const id0=curTrack().getSettings().deviceId,nameA=$("side").textContent;
+    say("Shooting: "+nameA+"…");const a=await shootBest();
+    await $("flip").onclick();                                     // go to the other side
+    if(curTrack().getSettings().deviceId===id0){$("both").disabled=false;return}
+    await sleep(900);                                              // let focus and exposure settle
+    const nameB=$("side").textContent;say("Shooting: "+nameB+"…");const b=await shootBest();
+    await $("flip").onclick();                                     // come back to the first side
+    const h=Math.min(a.height,b.height),wa=Math.round(a.width*h/a.height),wb=Math.round(b.width*h/b.height);
+    const c=document.createElement("canvas");c.width=wa+wb;c.height=h;
+    const x=c.getContext("2d");x.drawImage(a,0,0,wa,h);x.drawImage(b,wa,0,wb,h);
+    const fs=Math.round(h/28),bh=Math.round(h/18);x.font="600 "+fs+"px system-ui,sans-serif";
+    [[nameA,12],[nameB,wa+12]].forEach(([t,px])=>{x.fillStyle="rgba(0,0,0,.6)";x.fillRect(px,12,x.measureText(t).width+20,bh);x.fillStyle="#fff";x.fillText(t,px+10,12+bh*.72)});
+    const stamp=Date.now();
+    for(const [cv,nm] of [[c,"both-sides-"+stamp+".jpg"],[a,"side1-"+stamp+".jpg"],[b,"side2-"+stamp+".jpg"]]){
+      const bl=await blobOf(cv);addItem("photo",URL.createObjectURL(bl),nm);if(nm.startsWith("both"))sendFile("photo",nm,bl);
+    }
+    say("Saved: both sides together, plus each side alone.");
+  }catch(e){say("Could not shoot both sides.")}
+  $("both").disabled=false;
+};
+
+/* ---------- adjust photo and video ---------- */
+const adj={b:100,c:100,s:100,f:"none",mirror:null};
+const PRESETS={none:"",vivid:"contrast(115%) saturate(130%)",bw:"grayscale(1) contrast(110%)",warm:"sepia(.25) saturate(115%)",cool:"hue-rotate(-12deg) saturate(105%)",fade:"contrast(85%) brightness(108%) saturate(85%)"};
+const canFilter="filter" in CanvasRenderingContext2D.prototype;
+const filterStr=()=>`brightness(${adj.b}%) contrast(${adj.c}%) saturate(${adj.s}%) ${PRESETS[adj.f]}`.trim();
+const adjDirty=()=>adj.b!==100||adj.c!==100||adj.s!==100||adj.f!=="none";
+const mirrorNow=()=>adj.mirror===null?autoMirror:adj.mirror;
+function view(){                                   // live preview: filters, mirror, digital zoom
+  live.style.filter=filterStr();
+  live.style.transform=(mirrorNow()?"scaleX(-1) ":"")+(caps.zoom?"":"scale("+dz+")");
+  $("ov").style.transform=live.style.transform;$("mirVid").style.filter=live.style.filter;
+}
+[["aB","b"],["aC","c"],["aS","s"]].forEach(([id,k])=>{$(id).oninput=e=>{adj[k]=+e.target.value;view()}});
+$("aF").onchange=e=>{adj.f=e.target.value;view()};
+$("aM").onchange=e=>{adj.mirror=({auto:null,on:true,off:false})[e.target.value];view()};
+$("aReset").onclick=()=>{
+  Object.assign(adj,{b:100,c:100,s:100,f:"none",mirror:null});
+  ["aB","aC","aS"].forEach(id=>$(id).value=100);$("aF").value="none";$("aM").value="auto";
+  if(!caps.zoom){dz=1;$("zoom").value=1}view();
+};
+$("adjNote").textContent=canFilter?"Changes show live and are saved into photos and videos. Set them before you press Record.":"This browser shows changes live and applies them to photos. Videos are saved without them; use Chrome or Edge to record adjusted video.";
+function pixelAdjust(o){                           // fallback where canvas filters are missing (Safari)
+  const x=o.getContext("2d"),im=x.getImageData(0,0,o.width,o.height),d=im.data,b=adj.b/100,c=adj.c/100;
+  let sat=adj.f==="bw"?0:adj.s/100;
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i]*b,g=d[i+1]*b,bl=d[i+2]*b;const l=.299*r+.587*g+.114*bl;
+    r=l+(r-l)*sat;g=l+(g-l)*sat;bl=l+(bl-l)*sat;
+    d[i]=(r-128)*c+128;d[i+1]=(g-128)*c+128;d[i+2]=(bl-128)*c+128;
+  }
+  x.putImageData(im,0,0);
+}
+function applyAdjust(c){
+  const crop=!caps.zoom&&dz>1,mir=adj.mirror===true,neutral=!adjDirty();
+  if(neutral&&!crop&&!mir)return c;
+  const o=document.createElement("canvas");o.width=c.width;o.height=c.height;const x=o.getContext("2d");
+  if(canFilter)x.filter=filterStr();
+  const k=crop?dz:1,sw=c.width/k,sh=c.height/k;
+  if(mir){x.translate(o.width,0);x.scale(-1,1)}
+  x.drawImage(c,(c.width-sw)/2,(c.height-sh)/2,sw,sh,0,0,o.width,o.height);
+  if(!canFilter&&!neutral)pixelAdjust(o);
+  return o;
+}
+const rc=document.createElement("canvas");
+const needsPipe=()=>stabOn()||(canFilter&&(adjDirty()||(!caps.zoom&&dz>1)||adj.mirror===true));
+function startRecCanvas(){                         // record the adjusted picture instead of the raw camera
+  const w=live.videoWidth,h=live.videoHeight;rc.width=w;rc.height=h;const x=rc.getContext("2d");Object.assign(stab,{prev:null,px:0,py:0,sx:0,sy:0});
+  (function loop(){
+    const k=((!caps.zoom&&dz>1)?dz:1)*(stabOn()?1.08:1),sw=w/k,sh=h/k;
+    const [ox,oy]=stabOn()?stabShift(w,h,(w-sw)/2,(h-sh)/2):[0,0];
+    x.save();x.filter=filterStr();
+    if(adj.mirror===true){x.translate(w,0);x.scale(-1,1)}
+    x.drawImage(live,(w-sw)/2-ox,(h-sh)/2-oy,sw,sh,0,0,w,h);x.restore();
+    rcRaf=requestAnimationFrame(loop);
+  })();
+  return rc.captureStream(30);
+}
+
+/* ---------- self-timer ---------- */
+let skipTimer=false;
+function countdown(fn){
+  const n=skipTimer?0:+$("aT").value;
+  if(!n){fn();return}
+  let k=n;const el=$("count");el.hidden=false;el.textContent=k;
+  const t=setInterval(()=>{k--;if(k<=0){clearInterval(t);el.hidden=true;fn()}else el.textContent=k},1000);
+}
+
+/* ---------- full-screen viewfinder: see yourself while you shoot ---------- */
+function setFull(on){
+  $("stage").classList.toggle("full",on);document.body.style.overflow=on?"hidden":"";
+  $("full").textContent=on?"Exit full screen":"Full screen view";
+}
+$("full").onclick=()=>setFull(!$("stage").classList.contains("full"));
+$("bExit").onclick=()=>setFull(false);
+$("bPhoto").onclick=()=>$("photo").click();
+$("bVideo").onclick=()=>$("video").click();
+$("bFlip").onclick=()=>$("flip").click();
+document.addEventListener("keydown",e=>{if(e.key==="Escape")setFull(false)});
+setInterval(()=>{                                  // recording clock on screen
+  const on=recorder&&recorder.state==="recording";
+  $("bVideo").textContent=on?"Stop":"Record";$("bVideo").classList.toggle("rec",!!on);
+  if(on){const t=Math.floor((Date.now()-recT0)/1000);$("badgeText").textContent="REC "+String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0")}
+},500);
+
+/* ---------- trim recorded videos ---------- */
+function addTrim(d,v){
+  const box=document.createElement("details");box.className="trim";
+  box.innerHTML='<summary>Trim this video</summary><label>Start<input type="range" class="ts" min="0" max="1" step="0.1" value="0"><span class="tsv">0.0s</span></label><label>End<input type="range" class="te" min="0" max="1" step="0.1" value="1"><span class="tev">0.0s</span></label><button class="tb">Save trimmed clip</button>';
+  d.appendChild(box);
+  const ts=box.querySelector(".ts"),te=box.querySelector(".te"),tsv=box.querySelector(".tsv"),tev=box.querySelector(".tev"),btn=box.querySelector(".tb");
+  const fmt=x=>(+x).toFixed(1)+"s";
+  v.addEventListener("loadedmetadata",()=>{
+    const ready=()=>{ts.max=te.max=v.duration;te.value=v.duration;tev.textContent=fmt(v.duration)};
+    if(isFinite(v.duration))return ready();
+    v.currentTime=1e101;                                   // recorded files report no length until seeked to the end
+    v.addEventListener("timeupdate",function f(){v.removeEventListener("timeupdate",f);v.currentTime=0;ready()});
+  });
+  ts.oninput=()=>{if(+ts.value>+te.value-.3)ts.value=+te.value-.3;tsv.textContent=fmt(ts.value);v.currentTime=+ts.value};
+  te.oninput=()=>{if(+te.value<+ts.value+.3)te.value=+ts.value+.3;tev.textContent=fmt(te.value);v.currentTime=+te.value};
+  btn.onclick=async()=>{
+    const cap=v.captureStream||v.mozCaptureStream;
+    if(!cap){say("Trimming needs Chrome, Edge, or Firefox.");return}
+    const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t));
+    if(!mime){say("This browser cannot save trimmed clips.");return}
+    btn.disabled=true;const a=+ts.value,b=+te.value;
+    say("Trimming… the clip plays through once while it is saved.");
+    v.pause();v.currentTime=a;await new Promise(r=>v.addEventListener("seeked",r,{once:true}));
+    const rec=new MediaRecorder(cap.call(v),{mimeType:mime}),parts=[];
+    rec.ondataavailable=e=>e.data.size&&parts.push(e.data);
+    const done=new Promise(r=>{rec.onstop=r});
+    rec.start(500);await v.play();
+    await new Promise(r=>{const t=setInterval(()=>{if(v.currentTime>=b||v.ended){clearInterval(t);r()}},100)});
+    v.pause();rec.stop();await done;
+    addItem("video",URL.createObjectURL(new Blob(parts,{type:"video/webm"})),"trimmed-"+Date.now()+".webm");
+    say("Trimmed clip saved to Captures.");btn.disabled=false;
+  };
+}
+
+/* ---------- pro camera: resolution, format, video quality ---------- */
+const resMax=()=>+$("pRes").value||1e9;
+const fmtType=()=>$("pFmt").value==="png"?"image/png":"image/jpeg";
+const fmtExt=()=>$("pFmt").value==="png"?".png":".jpg";
+async function photoOpts(){                          // ask the camera for its largest still
+  if(resMax()<1e9||!ic)return {};
+  try{const c=await ic.getPhotoCapabilities();return {imageWidth:c.imageWidth.max,imageHeight:c.imageHeight.max}}catch(e){return {}}
+}
+async function applyVideoQ(){
+  const t=curTrack();if(!t)return;
+  const h=+$("pVq").value,f=+$("pFps").value;
+  try{await t.applyConstraints({width:{ideal:Math.round(h*16/9)},height:{ideal:h},frameRate:{ideal:f}})}catch(e){}
+  const st=t.getSettings();say("Video: "+st.width+"×"+st.height+" at "+Math.round(st.frameRate||f)+" fps"+((st.height<h||Math.round(st.frameRate||f)<f)?" (the most this camera offers)":""));
+  renderSpecs();
+}
+$("pVq").onchange=applyVideoQ;$("pFps").onchange=applyVideoQ;
+
+/* ---------- eye-tracking autofocus + tap to focus ---------- */
+const faceOK="FaceDetector" in window;
+let eyeT={x:0,y:0,t:0},eyeLocked=false,eyeBusy=false;
+async function eyeLoop(){
+  const ov=$("ov"),x=ov.getContext("2d");
+  if(!stream||live.readyState<2||dual.on||$("pEye").value!=="on"||!faceOK||eyeBusy){if(dual.on||$("pEye").value!=="on")x.clearRect(0,0,ov.width,ov.height);return}
+  eyeBusy=true;
+  try{
+    const fd=eyeLoop.fd||(eyeLoop.fd=new FaceDetector({fastMode:true,maxDetectedFaces:4}));
+    const fs=await fd.detect(live),vw=live.videoWidth,vh=live.videoHeight;
+    ov.width=vw;ov.height=vh;x.lineWidth=Math.max(3,vw/320);
+    let main=null;
+    fs.forEach(f=>{const b=f.boundingBox;if(!main||b.width>main.boundingBox.width)main=f;x.strokeStyle="rgba(255,255,255,.85)";x.strokeRect(b.x,b.y,b.width,b.height)});
+    if(main){
+      const b=main.boundingBox;
+      const eyes=(main.landmarks||[]).filter(l=>l.type==="eye").map(l=>({x:l.locations.reduce((a,q)=>a+q.x,0)/l.locations.length,y:l.locations.reduce((a,q)=>a+q.y,0)/l.locations.length}));
+      const tg=eyes.length?{x:eyes.reduce((a,e)=>a+e.x,0)/eyes.length,y:eyes.reduce((a,e)=>a+e.y,0)/eyes.length}:{x:b.x+b.width/2,y:b.y+b.height*.4};
+      x.strokeStyle="#2f8bff";eyes.forEach(e=>{x.beginPath();x.arc(e.x,e.y,vw/110,0,7);x.stroke()});
+      x.strokeRect(b.x,b.y,b.width,b.height);
+      const nx=tg.x/vw,ny=tg.y/vh,now=Date.now();
+      if((caps.focusMode||[]).includes("single-shot")&&now-eyeT.t>800&&(Math.hypot(nx-eyeT.x,ny-eyeT.y)>.05||now-eyeT.t>3000)){
+        eyeT={x:nx,y:ny,t:now};eyeLocked=true;applyAdv({focusMode:"single-shot",pointsOfInterest:[{x:nx,y:ny}]});
+      }
+    }else if(eyeLocked&&(caps.focusMode||[]).includes("continuous")){eyeLocked=false;applyAdv({focusMode:"continuous"})}
+  }catch(e){}
+  eyeBusy=false;
+}
+setInterval(eyeLoop,300);
+live.addEventListener("click",e=>{
+  if(!stream||dual.on)return;
+  const r=live.getBoundingClientRect(),sr=$("stage").getBoundingClientRect();
+  let nx=(e.clientX-r.left)/r.width,ny=(e.clientY-r.top)/r.height;
+  const vr=live.videoWidth/live.videoHeight,er=r.width/r.height;
+  if(vr>er)nx=.5+(nx-.5)*(er/vr);else ny=.5+(ny-.5)*(vr/er);
+  if(mirrorNow())nx=1-nx;
+  const ring=document.createElement("div");ring.className="ring";ring.style.left=(e.clientX-sr.left)+"px";ring.style.top=(e.clientY-sr.top)+"px";
+  $("stage").appendChild(ring);setTimeout(()=>ring.remove(),800);
+  if((caps.focusMode||[]).includes("single-shot")){eyeLocked=false;applyAdv({focusMode:"single-shot",pointsOfInterest:[{x:nx,y:ny}]});say("Focused on the tapped spot.")}
+  else say("This camera can’t focus on a tapped point.");
+});
+
+/* ---------- electronic stabilization (video) ---------- */
+const sc=document.createElement("canvas");sc.width=80;sc.height=45;const scx=sc.getContext("2d",{willReadFrequently:true});
+const stab={prev:null,px:0,py:0,sx:0,sy:0};
+const stabOn=()=>$("pStab").value==="on";
+function stabShift(w,h,mx,my){                      // measure shake, smooth it, slide the crop window against it
+  scx.drawImage(live,0,0,80,45);const d=scx.getImageData(0,0,80,45).data,g=new Uint8Array(3600);
+  for(let i=0;i<3600;i++)g[i]=(d[i*4]*77+d[i*4+1]*150+d[i*4+2]*29)>>8;
+  let bx=0,by=0;
+  if(stab.prev){let best=1e12;
+    for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){let sad=0;
+      for(let y=6;y<39;y++)for(let x=6;x<74;x++)sad+=Math.abs(g[y*80+x]-stab.prev[(y-dy)*80+x-dx]);
+      if(sad<best){best=sad;bx=dx;by=dy}}}
+  stab.prev=g;stab.px+=bx;stab.py+=by;stab.sx=.92*stab.sx+.08*stab.px;stab.sy=.92*stab.sy+.08*stab.py;
+  const k=w/80;
+  return [Math.max(-mx,Math.min(mx,(stab.sx-stab.px)*k)),Math.max(-my,Math.min(my,(stab.sy-stab.py)*k))];
+}
+
+/* ---------- shooting modes ---------- */
+const MODES={
+  wild:{pRes:"0",pBurst:"8",pVq:"1080",pFps:"60",pEye:"on",pStab:"on",aF:"vivid",note:"Wildlife: largest photo size, 8-frame burst that keeps the sharpest, 60 fps stabilized video. Use the zoom slider and tap to focus on the animal."},
+  wed:{pRes:"0",pBurst:"4",pVq:"1080",pFps:"30",pEye:"on",pStab:"on",aF:"warm",note:"Wedding and portrait: eye-tracking focus, largest photos, warm look, stabilized video."},
+  com:{pRes:"0",pBurst:"1",pVq:"2160",pFps:"30",pEye:"off",pStab:"off",aF:"none",pFmt:"png",note:"Commercial and product: largest lossless photos, natural color, 4K video. Tap the product to focus."},
+  vid:{pRes:"4500",pBurst:"1",pVq:"2160",pFps:"30",pEye:"on",pStab:"on",aF:"none",pFmt:"jpg",note:"Video production: 4K at 30 fps, high bitrate, eye-tracking focus, stabilization on."}
+};
+$("pMode").onchange=e=>{
+  const m=MODES[e.target.value];if(!m)return;
+  Object.entries(m).forEach(([id,v])=>{if(id!=="note"){$(id).value=v;$(id).dispatchEvent(new Event("change"))}});
+  $("pNote").textContent=m.note;
+};
+
+/* ---------- live spec sheet for this device ---------- */
+async function renderSpecs(){
+  const t=curTrack();if(!t)return;
+  const st=t.getSettings(),c=t.getCapabilities?t.getCapabilities():{},fm=c.focusMode||[];
+  let photo="";
+  if(ic){try{const p=await ic.getPhotoCapabilities();photo=p.imageWidth.max+" × "+p.imageHeight.max+" ("+(p.imageWidth.max*p.imageHeight.max/1e6).toFixed(1)+" MP)"}catch(e){}}
+  const rows=[
+    ["Largest photo",photo||("Video-frame size, "+st.width+" × "+st.height)],
+    ["Video now",st.width+" × "+st.height+" at "+Math.round(st.frameRate||0)+" fps"],
+    ["Best video offered",c.width&&c.height?c.width.max+" × "+c.height.max+(c.frameRate?" up to "+Math.round(c.frameRate.max)+" fps":""):"not reported"],
+    ["Autofocus",fm.length?fm.join(", "):"not reported"],
+    ["Tap to focus",fm.includes("single-shot")?"Yes":"No"],
+    ["Eye-tracking AF",faceOK?"Yes, people":"Not in this browser (use Chrome on Android)"],
+    ["Animal eye AF","Not available in a browser"],
+    ["Zoom",c.zoom?c.zoom.min+"× to "+c.zoom.max+"× (camera zoom)":"Digital, 1× to 3×"],
+    ["Exposure control",c.exposureCompensation?"Compensation + auto":"Auto only"],
+    ["Stabilization","Electronic, video only ("+($("pStab").value==="on"?"on":"off")+")"],
+    ["Sound","Band-pass, compressor, noise suppression"],
+    ["RAW photos","Not possible in a browser; PNG is lossless"]
+  ];
+  const tb=document.createElement("table");
+  rows.forEach(([a,b])=>{const tr=tb.insertRow();tr.insertCell().textContent=a;tr.insertCell().textContent=b});
+  const box=$("specs");box.replaceChildren(tb);
+}
+
+/* ---------- power button ---------- */
+let camOn=false;
+const PWR=ICON('<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/>');
+function updatePwr(){
+  const b=$("pwr");b.classList.toggle("on",camOn);b.setAttribute("aria-pressed",String(camOn));
+  b.innerHTML=PWR+'<span class="dot"></span>'+(camOn?"Camera on":"Camera off");
+}
+function camOff(){
+  if(recorder&&recorder.state==="recording")recorder.stop();
+  if(dual.on)stopDual();
+  if(pano.on)resetPano();
+  if(rv.on){rv.on=false;if(rv.done){const f=rv.done;rv.done=null;f()}}
+  if(recognizing)$("talk").click();
+  setMirror(false);setFull(false);
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=null;live.srcObject=null;$("mirVid").srcObject=null;
+  const o=$("ov");o.getContext("2d").clearRect(0,0,o.width,o.height);
+  ["photo","video","pano","talk","flip","rvid","auto","dual","both","full","mir"].forEach(k=>$(k).disabled=true);
+  $("chip").hidden=true;$("zoom").hidden=true;
+  $("gate").style.display="";$("gateMsg").textContent="The camera is off. Tap Start camera to turn it on.";
+  camOn=false;updatePwr();keepAwake(false);say("Camera off. The camera light should be off too.");
+}
+$("pwr").onclick=()=>{if(camOn)camOff();else $("start").click()};
+updatePwr();
+
+/* ---------- mirror: sizes and placement beside the device's camera hole ---------- */
+let mirrorOn=false,mW=260,mDrag=null;
+const MS={s:140,m:260,l:420};
+function placeMirror(){
+  const m=$("mirror"),full=m.classList.contains("full"),pos=$("mPos").value;
+  ["left","right","top","bottom","transform","width"].forEach(k=>m.style[k]="");
+  if(full)return;
+  m.style.width=mW+"px";
+  const T="calc(env(safe-area-inset-top,0px) + 6px)",B="calc(env(safe-area-inset-bottom,0px) + 8px)";
+  if(pos==="top"){m.style.top=T;m.style.left="50%";m.style.transform="translateX(-50%)"}
+  else if(pos==="tl"){m.style.top=T;m.style.left="8px"}
+  else if(pos==="tr"){m.style.top=T;m.style.right="8px"}
+  else if(pos==="bottom"){m.style.bottom=B;m.style.left="50%";m.style.transform="translateX(-50%)"}
+  else if(pos==="center"){m.style.top="50%";m.style.left="50%";m.style.transform="translate(-50%,-50%)"}
+  else{m.style.left=(m.dataset.x||8)+"px";m.style.top=(m.dataset.y||80)+"px"}
+  saveMirror();
+}
+function setMirror(on){
+  mirrorOn=on;$("mirror").hidden=!on;$("mir").textContent=on?"Mirror: on":"Mirror";
+  if(on){$("mirVid").srcObject=stream;$("mirVid").play().catch(()=>{});placeMirror();
+    const fm=curTrack()&&curTrack().getSettings().facingMode;
+    if(fm==="environment")say("Tip: switch to the front camera so the mirror shows you.")}
+}
+function setWidth(w){mW=Math.max(100,Math.min(720,w));$("mW").value=mW;$("mirror").classList.remove("full");$("mSize").value=mW<=200?"s":mW<=340?"m":"l";placeMirror()}
+$("mir").onclick=()=>setMirror(!mirrorOn);
+$("mClose").onclick=()=>setMirror(false);
+$("mMinus").onclick=()=>setWidth(mW-40);
+$("mPlus").onclick=()=>setWidth(mW+40);
+$("mFull").onclick=()=>{$("mirror").classList.toggle("full");$("mSize").value=$("mirror").classList.contains("full")?"f":"m";placeMirror()};
+$("mW").oninput=e=>setWidth(+e.target.value);
+$("mSize").onchange=e=>{
+  if(e.target.value==="f"){$("mirror").classList.add("full");placeMirror()}else setWidth(MS[e.target.value]);
+};
+$("mPos").onchange=()=>{$("mirror").classList.remove("full");if($("mSize").value==="f")$("mSize").value="m";placeMirror()};
+const mEl=$("mirror"),mClamp=(x,y)=>[Math.max(0,Math.min(innerWidth-mEl.offsetWidth,x)),Math.max(0,Math.min(innerHeight-mEl.offsetHeight,y))];
+function moveMirror(x,y){[x,y]=mClamp(x,y);mEl.dataset.x=x;mEl.dataset.y=y;$("mPos").value="custom";placeMirror()}
+mEl.addEventListener("pointerdown",e=>{                 // drag from anywhere on the mirror
+  if(e.target.closest("button,.mres")||mEl.classList.contains("full"))return;
+  const r=mEl.getBoundingClientRect();mDrag={dx:e.clientX-r.left,dy:e.clientY-r.top};
+  mEl.focus({preventScroll:true});if(mEl.setPointerCapture)mEl.setPointerCapture(e.pointerId);
+});
+mEl.addEventListener("pointermove",e=>{if(mDrag)moveMirror(e.clientX-mDrag.dx,e.clientY-mDrag.dy)});
+function endDrag(){                                      // snap to a screen edge when released close to it
+  if(!mDrag)return;mDrag=null;
+  const x=+mEl.dataset.x,y=+mEl.dataset.y,W=mEl.offsetWidth,H=mEl.offsetHeight,g=16,mg=8;
+  let nx=x,ny=y;
+  if(x<g)nx=mg;else if(innerWidth-(x+W)<g)nx=innerWidth-W-mg;
+  if(y<g)ny=mg;else if(innerHeight-(y+H)<g)ny=innerHeight-H-mg;
+  if(nx!==x||ny!==y)moveMirror(nx,ny);
+}
+mEl.addEventListener("pointerup",endDrag);mEl.addEventListener("pointercancel",endDrag);
+let mRes=null;const grip=mEl.querySelector(".mres");     // corner handle: drag to resize
+grip.addEventListener("pointerdown",e=>{
+  if(mEl.classList.contains("full"))return;
+  e.preventDefault();e.stopPropagation();
+  const r=mEl.getBoundingClientRect();mEl.dataset.x=r.left;mEl.dataset.y=r.top;$("mPos").value="custom";placeMirror();
+  mRes={x:e.clientX,w:mW};if(grip.setPointerCapture)grip.setPointerCapture(e.pointerId);
+});
+grip.addEventListener("pointermove",e=>{if(mRes)setWidth(Math.min(mRes.w+(e.clientX-mRes.x),innerWidth-8))});
+grip.addEventListener("pointerup",()=>{mRes=null});grip.addEventListener("pointercancel",()=>{mRes=null});
+mEl.addEventListener("keydown",e=>{                      // keyboard: arrows move, + and - resize
+  if(mEl.classList.contains("full"))return;
+  const st=e.shiftKey?40:10,k=e.key,r=mEl.getBoundingClientRect();
+  if(k.startsWith("Arrow")){e.preventDefault();moveMirror(r.left+(k==="ArrowRight"?st:k==="ArrowLeft"?-st:0),r.top+(k==="ArrowDown"?st:k==="ArrowUp"?-st:0))}
+  else if(k==="+"||k==="="){setWidth(mW+20)}else if(k==="-"){setWidth(mW-20)}
+});
+mEl.addEventListener("dblclick",e=>{                    // back under the camera hole
+  if(e.target.closest("button,.mres"))return;
+  $("mPos").value="top";mEl.classList.remove("full");placeMirror();
+});
+addEventListener("resize",()=>{if(!mEl.hidden&&$("mPos").value==="custom")moveMirror(+mEl.dataset.x||0,+mEl.dataset.y||0)});
+function saveMirror(){try{localStorage.setItem("s360mirror",JSON.stringify({w:mW,pos:$("mPos").value,x:mEl.dataset.x,y:mEl.dataset.y}))}catch(e){}}
+(function loadMirror(){
+  try{
+    const v=JSON.parse(localStorage.getItem("s360mirror")||"null");if(!v)return;
+    mW=Math.max(100,Math.min(720,+v.w||260));$("mW").value=mW;$("mSize").value=mW<=200?"s":mW<=340?"m":"l";
+    if(v.pos)$("mPos").value=v.pos;if(v.x!=null)mEl.dataset.x=v.x;if(v.y!=null)mEl.dataset.y=v.y;
+  }catch(e){}
+})();
+
+/* ---------- phone install (PWA), offline cache, screen stays on ---------- */
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register("sw.js").catch(()=>{});
+let deferredInstall=null,wl=null;
+const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+function installHelp(){
+  let t;
+  if(standalone)t="You are running the installed app.";
+  else if(location.protocol==="file:")t="This copy was opened from a saved file. To install it on a phone, put the app folder on a web address first (the README in the download explains how, in two minutes), then open that link on your phone.";
+  else if(isIOS)t="On iPhone or iPad: open this page in Safari, tap the Share button, then choose Add to Home Screen. Note that Safari has no Bluetooth turntable support, face detection, or video filters.";
+  else t="Open your browser menu and choose Install app or Add to Home screen. After that it opens full screen and keeps working with no internet.";
+  $("instTxt").textContent=t;
+}
+installHelp();
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;$("install").hidden=false;$("instTxt").textContent="Install it to run full screen from your home screen. It keeps working with no internet."});
+$("install").onclick=async()=>{if(!deferredInstall)return;deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;$("install").hidden=true};
+addEventListener("appinstalled",()=>{$("instTxt").textContent="Installed. Open it from your home screen.";$("install").hidden=true});
+async function keepAwake(on){                      // stop the phone screen sleeping while the camera is on
+  try{if(on&&navigator.wakeLock){wl=await navigator.wakeLock.request("screen")}else if(wl){await wl.release();wl=null}}catch(e){}
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&camOn)keepAwake(true)});
+if(!window.isSecureContext&&location.protocol!=="file:")$("gateMsg").textContent="This page is not on a secure (https) address, so phones block the camera. Open the https link or use localhost.";
+else if(location.protocol==="file:"&&myDev==="phone")$("gateMsg").textContent="Phones may block the camera for pages opened from a saved file. If the camera does not start, host the app folder (see the README) and open that link instead.";
+paint();
+})();
+</script>
+</body>
+</html>
